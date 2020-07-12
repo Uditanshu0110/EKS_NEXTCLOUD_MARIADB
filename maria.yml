@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nextcloudmaria
+  labels:
+    app: nextcloud
+spec:
+  ports:
+     - port: 3306
+  selector:
+    app: nextcloud
+    tier: mariadb
+  clusterIP: None
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mariadbclaim
+  labels: 
+    app: nextcloud
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloudmaria
+  labels:
+    app: nextcloud
+spec:
+  selector:
+   matchLabels:
+     app: nextcloud
+     tier: mariadb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+        tier: mariadb
+    spec:
+       containers:
+       - image: mariadb:latest
+         name: mariadb
+         env:
+         - name: MYSQL_ROOT_PASSWORD
+           valueFrom:
+             secretKeyRef:
+              name: mariadb-certificate
+              key: password
+         - name: MYSQL_USER
+           value: uditanshu
+         - name: MYSQL_PASSWORD
+           valueFrom:
+             secretKeyRef:
+               name: mariadbuser-certificate
+               key: password
+         - name: MYSQL_DATABASE
+           value: mydatabase
+         ports:
+         - containerPort: 3306
+           name: mysql
+         volumeMounts:
+         - name: mariadb-storage
+           mountPath: /var/lib/mysql
+       volumes:
+       - name: mariadb-storage
+         persistentVolumeClaim:
+           claimName: mariadbclaim

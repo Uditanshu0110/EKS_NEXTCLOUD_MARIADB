@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+secretGenerator:
+- name: mariadb-certificate
+  literals:
+  - password=uditanshu
+- name: mariadbuser-certificate
+  literals:
+  - password=redhat
+resources:
+  - maria.yml
+  - nextcloud.yml
